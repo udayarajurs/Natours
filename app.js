@@ -5,21 +5,25 @@ const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 
 const app = express();
+
+// built-in middleware function in Express
+app.use(express.json());
+
 console.log(process.env.NODE_ENV);
-// 1) MIDDLEWARES
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-app.use(express.json());
-
+// get UI desgin url
 app.use(express.static(`${__dirname}/public`));
 
+// middleware
 app.use((req, res, next) => {
   console.log('hello from the middleware...');
   next();
 });
 
+// get current time  (middleware)
 app.use((req, res, next) => {
   req.requestTime = new Date().toISOString();
   next();
