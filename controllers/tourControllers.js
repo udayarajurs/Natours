@@ -33,14 +33,21 @@ exports.getAllTours = async (req, res) => {
       query = query.select('-__v');
     }
 
-    // EXECUTE QUERY
-    const tours = await query;
+    // 4) Pagination
+    const page = req.query.page * 1 || 1;
+    const limit = req.query.limit * 1 || 100;
+    const skip = page * limit; // TODO : i will someting here need to check
 
-    // const query = Tour.find()
-    //   .where('duration')
-    //   .equals(5)
-    //   .where('difficulty')
-    //   .equals('easy');
+    // page=2&limit=10
+    query = query.skip(skip).limit(limit);
+
+    if (req.query.page) {
+      const numTours = await Tour.countDocuments();
+      if (skip >= numTours) throw new Error('This page does not exists');
+    }
+
+    // EXECUTE QUERY;
+    const tours = await query;
 
     // SEND RESPONSE
     res.status(200).json({
@@ -52,7 +59,7 @@ exports.getAllTours = async (req, res) => {
     });
   } catch (err) {
     res.status(404).json({
-      status: 'fail',
+      status: 'file',
       message: err,
     });
   }
