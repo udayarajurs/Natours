@@ -8,6 +8,17 @@ exports.aliasTopTours = async (req, res, next) => {
   next();
 };
 
+class APIFeatures {
+  constructor(query, queryString) {
+    this.query = query;
+    this.queryString = queryString;
+  }
+
+  filter(
+    
+  )
+}
+
 exports.getAllTours = async (req, res) => {
   try {
     console.log(req.query);
