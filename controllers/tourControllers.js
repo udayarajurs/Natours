@@ -14,17 +14,8 @@ class APIFeatures {
     this.queryString = queryString;
   }
 
-  filter(
-    
-  )
-}
-
-exports.getAllTours = async (req, res) => {
-  try {
-    console.log(req.query);
-    // BUILD QUERY
-    // 1A) Filtering
-    const queryObj = { ...req.query };
+  filter() {
+    const queryObj = { ...this.queryString };
     const excludedFields = ['page', 'sort', 'limit', 'fields'];
     excludedFields.forEach((el) => delete queryObj[el]);
 
@@ -32,16 +23,43 @@ exports.getAllTours = async (req, res) => {
     let queryStr = JSON.stringify(queryObj);
     queryStr = queryStr.replace(/\b(gte|te|lte|lt)\b/g, (match) => `$${match}`);
 
-    let query = Tour.find(JSON.parse(queryStr));
+    this.query.find(JSON.parse(queryStr));
+  }
 
-    //2) Sorting
-    if (req.query.sort) {
-      const sortBy = req.query.sort.split(',').join(' ');
-      query = query.sort(sortBy);
+  sort() {
+    if (this.queryString.sort) {
+      const sortBy = this.queryString.sort.split(',').join(' ');
+      this.query = this.query.sort(sortBy);
       // sort('price ratingsAverage')
     } else {
-      query = query.sort('-createdAt');
+      this.query = this.query.sort('-createdAt');
     }
+  }
+}
+
+exports.getAllTours = async (req, res) => {
+  try {
+    console.log(req.query);
+    // BUILD QUERY
+    // 1A) Filtering
+    // const queryObj = { ...req.query };
+    // const excludedFields = ['page', 'sort', 'limit', 'fields'];
+    // excludedFields.forEach((el) => delete queryObj[el]);
+
+    // // 1B) Advanced Filtering
+    // let queryStr = JSON.stringify(queryObj);
+    // queryStr = queryStr.replace(/\b(gte|te|lte|lt)\b/g, (match) => `$${match}`);
+
+    // let query = Tour.find(JSON.parse(queryStr));
+
+    //2) Sorting
+    // if (req.query.sort) {
+    //   const sortBy = req.query.sort.split(',').join(' ');
+    //   query = query.sort(sortBy);
+    //   // sort('price ratingsAverage')
+    // } else {
+    //   query = query.sort('-createdAt');
+    // }
 
     // 3) Field limiting
     if (req.query.fields) {
@@ -65,7 +83,8 @@ exports.getAllTours = async (req, res) => {
     }
 
     // EXECUTE QUERY;
-    const tours = await query;
+    const features = new APIFeatures(Tour.find()).filter().sort();
+    const tours = await features.query;
 
     // SEND RESPONSE
     res.status(200).json({
