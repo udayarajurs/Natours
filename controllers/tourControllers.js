@@ -23,7 +23,9 @@ class APIFeatures {
     let queryStr = JSON.stringify(queryObj);
     queryStr = queryStr.replace(/\b(gte|te|lte|lt)\b/g, (match) => `$${match}`);
 
-    this.query.find(JSON.parse(queryStr));
+    this.query = this.query.find(JSON.parse(queryStr));
+
+    return this; // Return enter object
   }
 
   sort() {
@@ -34,6 +36,30 @@ class APIFeatures {
     } else {
       this.query = this.query.sort('-createdAt');
     }
+
+    return this; // Return enter object
+  }
+
+  limitFields() {
+    if (this.queryString.fields) {
+      const fields = this.queryString.fields.split(',').join(' ');
+      this.query = this.query.select(fields);
+    } else {
+      this.query = this.query.select('-__v');
+    }
+
+    return this; // Return enter object
+  }
+
+  paginate() {
+    const page = this.queryString.page * 1 || 1;
+    const limit = this.queryString.limit * 1 || 100;
+    const skip = page * limit; // TODO : i will someting here need to check
+
+    // page=2&limit=10
+    this.query = this.query.skip(skip).limit(limit);
+
+    return this;
   }
 }
 
@@ -62,28 +88,32 @@ exports.getAllTours = async (req, res) => {
     // }
 
     // 3) Field limiting
-    if (req.query.fields) {
-      const fields = req.query.fields.split(',').join(' ');
-      query = query.select(fields);
-    } else {
-      query = query.select('-__v');
-    }
+    // if (req.query.fields) {
+    //   const fields = req.query.fields.split(',').join(' ');
+    //   query = query.select(fields);
+    // } else {
+    //   query = query.select('-__v');
+    // }
 
     // 4) Pagination
-    const page = req.query.page * 1 || 1;
-    const limit = req.query.limit * 1 || 100;
-    const skip = page * limit; // TODO : i will someting here need to check
+    // const page = req.query.page * 1 || 1;
+    // const limit = req.query.limit * 1 || 100;
+    // const skip = page * limit; // TODO : i will someting here need to check
 
-    // page=2&limit=10
-    query = query.skip(skip).limit(limit);
+    // // page=2&limit=10
+    // query = query.skip(skip).limit(limit);
 
-    if (req.query.page) {
-      const numTours = await Tour.countDocuments();
-      if (skip >= numTours) throw new Error('This page does not exists');
-    }
+    // if (req.query.page) {
+    //   const numTours = await Tour.countDocuments();
+    //   if (skip >= numTours) throw new Error('This page does not exists');
+    // }
 
     // EXECUTE QUERY;
-    const features = new APIFeatures(Tour.find()).filter().sort();
+    const features = new APIFeatures(Tour.find())
+      .filter()
+      .sort()
+      .limitFields()
+      .paginate();
     const tours = await features.query;
 
     // SEND RESPONSE
